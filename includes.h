@@ -27,7 +27,6 @@
 
 #define ALT_SHELL "/bin/bash"
 
-#include "config.h"
 #include "options.h"
 #include "debug.h"
 
