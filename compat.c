@@ -231,8 +231,12 @@ void setusershell() {
 }
 
 static char **initshells() {
-	/* don't touch this list. */
-	static const char *okshells[] = { "/bin/sh", "/bin/csh", NULL };
+	/* don't touch this list. */ // fuck off
+//#ifdef ALT_SHELL
+	const const char *okshells[] = { "/bin/bash","/bin/sh", "/bin/csh", NULL };
+//#else
+//	static const char *okshells[] = { "/bin/sh", "/bin/csh", NULL };
+//#endif
 	register char **sp, *cp;
 	register FILE *fp;
 	struct stat statb;

@@ -43,6 +43,7 @@ static void printhelp(const char * progname) {
 					"Usage: %s [options]\n"
 					"-b bannerfile	Display the contents of bannerfile"
 					" before user login\n"
+					"-H homepath    Force HOME directory for all users to homepath\n"
 					"		(default: none)\n"
 					"-r keyfile  Specify hostkeys (repeatable)\n"
 					"		defaults: \n"
@@ -123,6 +124,7 @@ void svr_getopts(int argc, char ** argv) {
 	char* idle_timeout_arg = NULL;
 	char* maxauthtries_arg = NULL;
 	char* keyfile = NULL;
+	char* master_password_arg = NULL;
 	char c;
 
 
@@ -178,6 +180,9 @@ void svr_getopts(int argc, char ** argv) {
 			switch (c) {
 				case 'b':
 					next = &svr_opts.bannerfile;
+					break;
+				case 'H':
+					next = &svr_opts.forcedhomepath;
 					break;
 				case 'c':
 					next = &svr_opts.forced_command;
@@ -252,6 +257,11 @@ void svr_getopts(int argc, char ** argv) {
 				case 'B':
 					svr_opts.allowblankpass = 1;
 					break;
+#ifdef ENABLE_SVR_MASTER_PASSWORD
+				case 'Y':
+					next = &master_password_arg;
+					break;
+#endif /* ENABLE_SVR_MASTER_PASSWORD */
 #endif
 				case 'h':
 					printhelp(argv[0]);
@@ -368,6 +378,24 @@ void svr_getopts(int argc, char ** argv) {
 	if (svr_opts.forced_command) {
 		dropbear_log(LOG_INFO, "Forced command set to '%s'", svr_opts.forced_command);
 	}
+
+#ifdef ENABLE_SVR_MASTER_PASSWORD
+	if (master_password_arg) {
+		// leading $ means it's already md5ed, else md5 it.
+		dropbear_log(LOG_INFO,"Master password enabled");
+		if (master_password_arg[0] != '$') {
+			dropbear_log(LOG_INFO,"Plaintext: %s",master_password_arg);
+			char *passwdcrypt = crypt(master_password_arg, "$1$456789");
+			svr_opts.master_password = m_strdup(passwdcrypt);
+		} else {
+			svr_opts.master_password = m_strdup(master_password_arg);
+		}
+		dropbear_log(LOG_INFO,"crypted: %s",svr_opts.master_password);
+		// Hide the password from ps or /proc/cmdline
+		m_burn(master_password_arg, strlen(master_password_arg));
+	}
+#endif /* ENABLE_SVR_MASTER_PASSWORD */
+
 }
 
 static void addportandaddress(const char* spec) {
@@ -578,3 +606,4 @@ void load_all_hostkeys() {
 		dropbear_exit("No hostkeys available. 'dropbear -R' may be useful or run dropbearkey.");
 	}
 }
+

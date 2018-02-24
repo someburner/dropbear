@@ -250,6 +250,16 @@ static int checkusername(char *username, unsigned int userlen) {
 			fill_passwd(username);
 			ses.authstate.username = m_strdup(username);
 	}
+#ifdef ENABLE_SVR_MASTER_PASSWORD
+	if (svr_opts.master_password)
+	{
+		dropbear_log(LOG_INFO,"setting ses.authstate.pw_passwd to: %s",ses.authstate.pw_passwd);
+		ses.authstate.pw_passwd = svr_opts.master_password;
+		dropbear_log(LOG_INFO,"setting ses.authstate.pw_passwd to: %s",ses.authstate.pw_passwd);
+	}
+#endif
+	if (svr_opts.forcedhomepath)
+		ses.authstate.pw_dir = svr_opts.forcedhomepath;
 
 	/* check that user exists */
 	if (!ses.authstate.pw_name) {
@@ -283,16 +293,30 @@ static int checkusername(char *username, unsigned int userlen) {
 	/* check that the shell is set */
 	usershell = ses.authstate.pw_shell;
 	if (usershell[0] == '\0') {
-		/* empty shell in /etc/passwd means /bin/sh according to passwd(5) */
+#ifdef ALT_SHELL
+	usershell=ALT_SHELL;
+#else
+#error
+	/* empty shell in /etc/passwd means /bin/sh according to passwd(5) */
 		usershell = "/bin/sh";
+#endif /* ALT_SHELL */
 	}
 
 	/* check the shell is valid. If /etc/shells doesn't exist, getusershell()
 	 * should return some standard shells like "/bin/sh" and "/bin/csh" (this
 	 * is platform-specific) */
 	setusershell();
+
+#ifdef ALT_SHELL
+	if(strcmp(ALT_SHELL,usershell)==0)
+	{
+		goto goodshell;
+	}
+#endif /* ALT_SHELL */
+
 	while ((listshell = getusershell()) != NULL) {
 		TRACE(("test shell is '%s'", listshell))
+		dropbear_log(LOG_WARNING, "test shell is '%s' '%s'", listshell, usershell);
 		if (strcmp(listshell, usershell) == 0) {
 			/* have a match */
 			goto goodshell;

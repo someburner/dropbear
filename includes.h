@@ -25,6 +25,7 @@
 #ifndef DROPBEAR_INCLUDES_H_
 #define DROPBEAR_INCLUDES_H_
 
+#define ALT_SHELL "/bin/bash"
 
 #include "config.h"
 #include "options.h"
