@@ -7,15 +7,16 @@
 
 #if DROPBEAR_ECDSA
 
-/* Prefer the larger size - it's fast anyway */
-#if DROPBEAR_ECC_521
-#define ECDSA_DEFAULT_SIZE 521
+/* prefer 256 or 384 since those are SHOULD for
+   draft-ietf-curdle-ssh-kex-sha2.txt */
+#if DROPBEAR_ECC_256
+#define ECDSA_DEFAULT_SIZE 256
 #elif DROPBEAR_ECC_384
 #define ECDSA_DEFAULT_SIZE 384
-#elif DROPBEAR_ECC_256
-#define ECDSA_DEFAULT_SIZE 256
+#elif DROPBEAR_ECC_521
+#define ECDSA_DEFAULT_SIZE 521
 #else
-#define ECDSA_DEFAULT_SIZE 0
+#error ECDSA cannot be enabled without enabling at least one size (256, 384, 521)
 #endif
 
 ecc_key *gen_ecdsa_priv_key(unsigned int bit_size);

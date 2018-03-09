@@ -40,8 +40,10 @@
 #include "auth.h"
 #include "runopts.h"
 #include "crypto_desc.h"
+#include "fuzz.h"
 
 static void svr_remoteclosed(void);
+static void svr_algos_initialise(void);
 
 struct serversession svr_ses; /* GLOBAL */
 
@@ -102,6 +104,7 @@ void svr_session(int sock, int childpipe) {
 	svr_authinitialise();
 	chaninitialise(svr_chantypes);
 	svr_chansessinitialise();
+	svr_algos_initialise();
 
 	/* for logging the remote address */
 	get_socket_address(ses.sock_in, NULL, NULL, &host, &port, 0);
@@ -182,6 +185,13 @@ void svr_dropbear_exit(int exitcode, const char* format, va_list param) {
 		session_cleanup();
 	}
 
+#if DROPBEAR_FUZZ
+	/* longjmp before cleaning up svr_opts */
+    if (fuzz.do_jmp) {
+        longjmp(fuzz.jmp, 1);
+    }
+#endif
+
 	if (svr_opts.hostkey) {
 		sign_key_free(svr_opts.hostkey);
 		svr_opts.hostkey = NULL;
@@ -191,6 +201,7 @@ void svr_dropbear_exit(int exitcode, const char* format, va_list param) {
 		m_free(svr_opts.ports[i]);
 	}
 
+    
 	exit(exitcode);
 
 }
@@ -236,10 +247,23 @@ void svr_dropbear_log(int priority, const char* format, va_list param) {
 static void svr_remoteclosed() {
 
 	m_close(ses.sock_in);
-	m_close(ses.sock_out);
+	if (ses.sock_in != ses.sock_out) {
+		m_close(ses.sock_out);
+	}
 	ses.sock_in = -1;
 	ses.sock_out = -1;
 	dropbear_close("Exited normally");
 
+}
+
+static void svr_algos_initialise(void) {
+#if DROPBEAR_DH_GROUP1 && DROPBEAR_DH_GROUP1_CLIENTONLY
+	algo_type *algo;
+	for (algo = sshkex; algo->name; algo++) {
+		if (strcmp(algo->name, "diffie-hellman-group1-sha1") == 0) {
+			algo->usable = 0;
+		}
+	}
+#endif
 }
 

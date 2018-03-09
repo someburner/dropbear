@@ -6,8 +6,8 @@
 default_options.h  documents compile-time options, and provides default values.
 
 Local customisation should be added to localoptions.h which is
-used if it exists. Options defined there will override any options in this
-file.
+used if it exists in the build directory. Options defined there will override 
+any options in this file.
 
 Options can also be defined with -DDROPBEAR_XXX=[0,1] in Makefile CFLAGS
 
@@ -149,12 +149,17 @@ IMPORTANT: Some options will require "make clean" after changes */
  * Small systems should generally include either curve25519 or ecdh for performance.
  * curve25519 is less widely supported but is faster
  */ 
-#define DROPBEAR_DH_GROUP1 1
 #define DROPBEAR_DH_GROUP14_SHA1 1
 #define DROPBEAR_DH_GROUP14_SHA256 1
 #define DROPBEAR_DH_GROUP16 0
 #define DROPBEAR_CURVE25519 1
 #define DROPBEAR_ECDH 1
+#define DROPBEAR_DH_GROUP1 1
+
+/* When group1 is enabled it will only be allowed by Dropbear client
+not as a server, due to concerns over its strength. Set to 0 to allow
+group1 in Dropbear server too */
+#define DROPBEAR_DH_GROUP1_CLIENTONLY 1
 
 /* Control the memory/performance/compression tradeoff for zlib.
  * Set windowBits=8 for least memory usage, see your system's

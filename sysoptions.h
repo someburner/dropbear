@@ -4,7 +4,7 @@
  *******************************************************************/
 
 #ifndef DROPBEAR_VERSION
-#define DROPBEAR_VERSION "2017.75"
+#define DROPBEAR_VERSION "2018.76"
 #endif
 
 #define LOCAL_IDENT "SSH-2.0-dropbear_" DROPBEAR_VERSION
@@ -80,6 +80,8 @@
 #define DROPBEAR_FAILURE -1
  
 #define DROPBEAR_PASSWORD_ENV "DROPBEAR_PASSWORD"
+
+#define DROPBEAR_NGROUP_MAX 1024
 
 /* Required for pubkey auth */
 #define DROPBEAR_SIGNKEY_VERIFY ((DROPBEAR_SVR_PUBKEY_AUTH) || (DROPBEAR_CLIENT))
@@ -313,5 +315,18 @@ If you test it please contact the Dropbear author */
 #define DROPBEAR_SERVER_TCP_FAST_OPEN 0
 #define DROPBEAR_CLIENT_TCP_FAST_OPEN 0
 #endif
+
+#define DROPBEAR_TRACKING_MALLOC (DROPBEAR_FUZZ)
+
+/* Used to work around Memory Sanitizer false positives */
+#if defined(__has_feature)
+#  if __has_feature(memory_sanitizer)
+#    define DROPBEAR_MSAN 1
+#  endif
+#endif
+#ifndef DROPBEAR_MSAN 
+#define DROPBEAR_MSAN 0
+#endif
+
 
 /* no include guard for this file */
